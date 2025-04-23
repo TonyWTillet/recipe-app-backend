@@ -1,7 +1,9 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from transformers import MT5Tokenizer, MT5ForConditionalGeneration, AutoTokenizer, AutoModelForCausalLM, AutoTokenizer, AutoModelForCausalLM, BloomTokenizerFast, BloomForCausalLM
 import torch
+
 
 # === 🔁 Charger les modèles fine-tunés ===
 # MT5 model
@@ -18,11 +20,12 @@ bloom_tokenizer = BloomTokenizerFast.from_pretrained("bigscience/bloom-560m")
 bloom_model = BloomForCausalLM.from_pretrained("bigscience/bloom-560m")
 
 # === 🌐 Contexte pour les idées de recettes ===
-cooking_context = """Tu es un chef créatif qui propose des idées de recettes. Pour chaque demande, donne exactement 3 suggestions de recettes différentes.
-Format de réponse attendu :
-1. [Nom de la recette 1] - [Description courte en une phrase]
-2. [Nom de la recette 2] - [Description courte en une phrase]
-3. [Nom de la recette 3] - [Description courte en une phrase]"""
+cooking_context = """Tu es un assistant de cuisine expérimenté. Ta mission est d'aider les utilisateurs à trouver des recettes à cuisiner en fonction de leurs critères (ingrédients disponibles, régime alimentaire, type de plat...).
+
+Pour chaque demande, propose exactement 3 recettes différentes que l'utilisateur peut cuisiner. Chaque recette doit respecter les critères fournis.
+
+Format attendu :
+1. [Nom de la recette] - [Brève description de la recette]"""
 
 # === 🍳 Générateur d'idées de recettes pour MT5 ===
 def generate_text_mt5(prompt: str) -> str:
@@ -38,7 +41,7 @@ def generate_text_mt5(prompt: str) -> str:
             no_repeat_ngram_size=2,
             early_stopping=True,
             do_sample=True,  # Activé pour permettre l'utilisation de temperature et top_p
-            temperature=0.9,
+            temperature=0.6,
             top_p=0.95,
             repetition_penalty=1.2,
             min_length=50
@@ -99,13 +102,13 @@ def generate_text_bloom(prompt: str) -> str:
         inputs = bloom_tokenizer(formatted_prompt, return_tensors="pt", truncation=True, max_length=512)
         outputs = bloom_model.generate(
             **inputs,
-            max_length=500,
-            num_beams=4,
+            max_length=200,
+            num_beams=5,
             no_repeat_ngram_size=2,
             early_stopping=True,
             do_sample=True,  # Activé pour permettre l'utilisation de temperature et top_p
-            temperature=0.7,
-            top_p=0.95,
+            temperature=0.5,
+            top_p=0.9,
             repetition_penalty=1.2,
             min_length=50
         )
@@ -126,6 +129,13 @@ def generate_text_bloom(prompt: str) -> str:
 
 # === 🚀 FastAPI ===
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # ou ["*"] en dev pour tout autoriser
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Prompt(BaseModel):
     prompt: str
