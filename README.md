@@ -117,8 +117,6 @@ Required environment variables:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📫 Contact
+## 📚 Front
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
-
-Project Link: [https://github.com/yourusername/recipe-app-backend](https://github.com/yourusername/recipe-app-backend) 
+Front Project Link: [https://github.com/TonyWTillet/recipe-app](https://github.com/TonyWTillet/recipe-app) 
